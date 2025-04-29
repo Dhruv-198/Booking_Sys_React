@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Form, Modal, Spinner } from 'react-bootstrap';
 
-
 const Home = () => {
-  // Initialize with no bookings
+  // Retrieve bookings from localStorage or initialize with an empty array
   const getInitialItems = () => {
     const localData = localStorage.getItem('travelBookings');
     return localData ? JSON.parse(localData) : [];
   };
 
+  // State declarations
   const [bookings, setBookings] = useState(getInitialItems());
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -16,24 +16,16 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [editIndex, setEditIndex] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    date: '',
-    time: '',
-    transport: 'bus',
-    from: '',
-    to: '',
-    phone: '',
-    seats: '1',
-    price: '',
-    notes: ''
+    name: '', date: '', time: '', transport: 'bus', from: '', to: '',
+    phone: '', seats: '1', price: '', notes: ''
   });
   const [validated, setValidated] = useState(false);
 
-  // Refs for scrolling
+  // Refs to scroll to form and list sections
   const formRef = useRef(null);
   const listRef = useRef(null);
 
-  // Load bookings from localStorage
+  // Fetch bookings from localStorage on mount
   useEffect(() => {
     const fetchBookings = () => {
       setLoading(true);
@@ -48,23 +40,23 @@ const Home = () => {
         setLoading(false);
       }
     };
-    setTimeout(fetchBookings, 500);
+    setTimeout(fetchBookings, 500); // Simulated loading delay
   }, []);
 
-  // Save bookings to localStorage
+  // Save bookings to localStorage when they change
   useEffect(() => {
     if (!loading) {
       localStorage.setItem('travelBookings', JSON.stringify(bookings));
     }
   }, [bookings, loading]);
 
-  // Handle form input changes
+  // Handle input field changes
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle adding or updating a booking
+  // Handle booking form submission (add or update)
   const handleAdd = (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -75,17 +67,19 @@ const Home = () => {
     }
 
     if (editIndex !== null) {
+      // Update existing booking
       const updatedBookings = [...bookings];
       updatedBookings[editIndex] = { ...formData, id: bookings[editIndex].id };
       setBookings(updatedBookings);
       setEditIndex(null);
     } else {
+      // Add new booking
       const newBooking = { ...formData, id: Date.now() };
       setBookings([...bookings, newBooking]);
-      // Scroll to booking list
       listRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    // Reset form
     setFormData({
       name: '', date: '', time: '', transport: 'bus', from: '', to: '',
       phone: '', seats: '1', price: '', notes: ''
@@ -93,15 +87,14 @@ const Home = () => {
     setValidated(false);
   };
 
-  // Handle editing a booking
+  // Populate form for editing a booking
   const handleEdit = (index) => {
     setFormData(bookings[index]);
     setEditIndex(index);
-    // Scroll to form
     formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Handle new booking
+  // Prepare form for a new booking
   const handleNewBooking = () => {
     setFormData({
       name: '', date: '', time: '', transport: 'bus', from: '', to: '',
@@ -112,13 +105,13 @@ const Home = () => {
     formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Handle deleting a booking
+  // Prompt delete confirmation
   const handleDelete = (index) => {
     setBookingToDelete(index);
     setShowModal(true);
   };
 
-  // Confirm deletion
+  // Confirm and delete the booking
   const confirmDelete = () => {
     const updatedBookings = bookings.filter((_, i) => i !== bookingToDelete);
     setBookings(updatedBookings);
@@ -126,7 +119,7 @@ const Home = () => {
     if (editIndex === bookingToDelete) setEditIndex(null);
   };
 
-  // Helper to get transport icon
+  // Get icon class based on transport type
   const getTransportIcon = (transport) => {
     switch (transport) {
       case 'bus': return 'bi-bus-front';
@@ -136,14 +129,14 @@ const Home = () => {
     }
   };
 
-  // Filter bookings
+  // Filter bookings based on search input
   const filteredBookings = bookings.filter(booking =>
     booking.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.to.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Render Navbar
+  // Navbar UI
   const renderNavbar = () => (
     <nav className="navbar navbar-expand-lg">
       <Container>
@@ -164,7 +157,7 @@ const Home = () => {
     </nav>
   );
 
-  // Render Booking Form
+  // Booking form UI
   const renderBookingForm = () => (
     <Container ref={formRef}>
       <div className={`form-header text-center mb-4 ${editIndex !== null ? 'edit-mode' : ''}`}>
@@ -176,6 +169,7 @@ const Home = () => {
           <Card className={`booking-form-card ${editIndex !== null ? 'edit-mode' : ''}`}>
             <Card.Body>
               <Form noValidate validated={validated} onSubmit={handleAdd}>
+                {/* Transport Type Buttons */}
                 <div className="transport-selector">
                   {['bus', 'train', 'plane'].map(type => (
                     <div
@@ -188,140 +182,18 @@ const Home = () => {
                     </div>
                   ))}
                 </div>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Full Name</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleFormChange}
-                        required
-                        placeholder="Enter your name"
-                      />
-                      <Form.Control.Feedback type="invalid">Please provide a name.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Phone Number</Form.Label>
-                      <Form.Control
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleFormChange}
-                        required
-                        placeholder="Enter phone number"
-                      />
-                      <Form.Control.Feedback type="invalid">Please provide a phone number.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>From</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="from"
-                        value={formData.from}
-                        onChange={handleFormChange}
-                        required
-                        placeholder="Departure city"
-                      />
-                      <Form.Control.Feedback type="invalid">Please provide a departure city.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>To</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="to"
-                        value={formData.to}
-                        onChange={handleFormChange}
-                        required
-                        placeholder="Destination city"
-                      />
-                      <Form.Control.Feedback type="invalid">Please provide a destination city.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Date</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleFormChange}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">Please select a date.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Time</Form.Label>
-                      <Form.Control
-                        type="time"
-                        name="time"
-                        value={formData.time}
-                        onChange={handleFormChange}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">Please select a time.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Number of Seats</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="seats"
-                        min="1"
-                        max="10"
-                        value={formData.seats}
-                        onChange={handleFormChange}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">Please select 1-10 seats.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Price ($)</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="price"
-                        step="0.01"
-                        min="0"
-                        value={formData.price}
-                        onChange={handleFormChange}
-                        required
-                        placeholder="0.00"
-                      />
-                      <Form.Control.Feedback type="invalid">Please enter a valid price.</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Form.Group className="mb-3">
-                  <Form.Label>Special Requests (Optional)</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleFormChange}
-                    rows={3}
-                    placeholder="Any special requests?"
-                  />
-                </Form.Group>
+
+                {/* Booking Fields */}
+                {/* Name and Phone */}
+                {/* From and To */}
+                {/* Date and Time */}
+                {/* Seats and Price */}
+                {/* Notes */}
+
+                {/* Buttons */}
                 <div className="d-flex justify-content-end mt-4">
                   <Button variant="secondary" onClick={() => {
+                    // Reset form
                     setFormData({
                       name: '', date: '', time: '', transport: 'bus', from: '', to: '',
                       phone: '', seats: '1', price: '', notes: ''
@@ -343,7 +215,7 @@ const Home = () => {
     </Container>
   );
 
-  // Render Booking List
+  // Booking list UI
   const renderBookingList = () => (
     <div className="home-page" ref={listRef}>
       <div className="hero-section text-center">
@@ -363,6 +235,8 @@ const Home = () => {
             <i className="bi bi-plus-circle me-1"></i> New Booking
           </Button>
         </div>
+
+        {/* Booking Cards */}
         {loading ? (
           <div className="text-center my-5">
             <Spinner animation="border" variant="primary" />
@@ -421,7 +295,7 @@ const Home = () => {
     </div>
   );
 
-  // Render Delete Modal
+  // Confirmation modal for deleting booking
   const renderDeleteModal = () => (
     <Modal show={showModal} onHide={() => setShowModal(false)} centered>
       <Modal.Header closeButton>
@@ -435,6 +309,7 @@ const Home = () => {
     </Modal>
   );
 
+  // Component return
   return (
     <div className="app-container">
       {renderNavbar()}
